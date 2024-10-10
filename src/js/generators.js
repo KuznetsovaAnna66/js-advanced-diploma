@@ -30,12 +30,16 @@ export function* characterGenerator(allowedTypes, maxLevel) {
  * */
 export function generateTeam(allowedTypes, maxLevel, characterCount) {
   // TODO: write logic here
+  const team = new Team();
   const character = characterGenerator(allowedTypes, maxLevel);
-  const team = [];
 
   for (let i = 0; i < characterCount; i++) {
-    team.push(character.next().value);
+    const newCharacter = character.next().value; // Получаем нового персонажа
+    if (newCharacter) {
+      // Проверяем, создан ли персонаж
+      team.add(newCharacter); // Добавляем его в команду
+    }
   }
 
-  return new Team(team);
+  return team;
 }

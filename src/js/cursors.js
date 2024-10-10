@@ -1,8 +1,10 @@
+import GameController from "./GameController";
+
 const cursors = {
-  auto: 'auto',
-  pointer: 'pointer',
-  crosshair: 'crosshair',
-  notallowed: 'not-allowed',
+  auto: "auto",
+  pointer: "pointer",
+  crosshair: "crosshair",
+  notallowed: "not-allowed",
 };
 
 export default cursors;

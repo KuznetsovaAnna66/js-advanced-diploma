@@ -21,7 +21,7 @@ test("return left", () => {
 });
 
 test("should return right", () => {
-  const result = calcTileType(21, 8);
+  const result = calcTileType(15, 8);
   expect(result).toBe("right");
 });
 
