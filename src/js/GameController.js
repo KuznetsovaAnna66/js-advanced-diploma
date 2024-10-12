@@ -9,6 +9,7 @@ import Magician from "./characters/Magician";
 import Vampire from "./characters/Vampire";
 import Undead from "./characters/Undead";
 import Daemon from "./characters/Daemon";
+import cursors from "./cursors";
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -77,7 +78,7 @@ export default class GameController {
     }
 
     const characterType = selectedCharacter.character.constructor;
-    if (selectedCharacter || this.playerTypes.includes(characterType)) {
+    if (selectedCharacter && this.playerTypes.includes(characterType)) {
       this.positionedCharacters.forEach((element) => {
         this.gamePlay.deselectCell(element.position);
       });
@@ -100,10 +101,42 @@ export default class GameController {
       const tooltipInfo = this.formatCharacterInfo(selectedCharacter.character);
       this.gamePlay.showCellTooltip(tooltipInfo, index);
     }
+
+    //подсвечиваются доступные для перехода клетки
+    if (
+      this.currentCharacter &&
+      !this.getCharacter(index) &&
+      this.isMoving(index)
+    ) {
+      this.gamePlay.setCursor(cursors.pointer);
+      this.gamePlay.selectCell(index, "green");
+    } else if (this.currentCharacter && !this.isUserCharacter(index)) {
+      this.gamePlay.setCursor(cursors.notallowed);
+    }
+
+    //подсвечиваются для удара
+    if (
+      this.currentCharacter &&
+      this.getCharacter(index) &&
+      !this.isUserCharacter(index)
+    ) {
+      if (this.isAttack(index)) {
+        this.gamePlay.setCursor(cursors.crosshair);
+        this.gamePlay.selectCell(index, "red");
+      } else if (this.currentCharacter && !this.isUserCharacter(index)) {
+        this.gamePlay.setCursor(cursors.notallowed);
+      }
+    }
   }
 
   onCellLeave(index) {
     // TODO: react to mouse leave
+    this.gamePlay.cells.forEach((element) =>
+      element.classList.remove("selected-red")
+    );
+    this.gamePlay.cells.forEach((element) =>
+      element.classList.remove("selected-green")
+    );
     this.gamePlay.setCursor("auto");
     this.gamePlay.hideCellTooltip(index);
   }
@@ -141,6 +174,79 @@ export default class GameController {
   }
 
   getCharacter(index) {
-    return this.positionedCharacters[index];
+    return this.positionedCharacters.find(
+      (element) => element.position === index
+    );
+  }
+
+  isUserCharacter(index) {
+    if (this.getCharacter(index)) {
+      const char = this.getCharacter(index).character;
+      return this.playerTypes.some((element) => char instanceof element);
+    }
+    return false;
+  }
+
+  isMoving(index) {
+    if (this.currentCharacter) {
+      const mov = this.currentCharacter.character.movement;
+      const arr = this.calcMovementRange(this.currentCharacter.position, mov);
+      return arr.includes(index);
+    }
+    return false;
+  }
+
+  isAttack(index) {
+    if (this.currentCharacter) {
+      const attack = this.currentCharacter.character.attackRange;
+      const arr = this.calcMovementRange(
+        this.currentCharacter.position,
+        attack
+      );
+      return arr.includes(index);
+    }
+    return false;
+  }
+
+  calcMovementRange(index, character) {
+    const availableMovements = [];
+    const boardSize = this.boardSize;
+
+    const row = Math.floor(index / boardSize);
+    const col = index % boardSize;
+
+    //по вертикали
+    for (let i = 1; i <= character; i++) {
+      if (row + i < boardSize) {
+        availableMovements.push(index + boardSize * i); // Вниз
+      }
+      if (row - i >= 0) {
+        availableMovements.push(index - boardSize * i); // Вверх
+      }
+    }
+
+    //по горизонтали
+    for (let i = 1; i <= character; i++) {
+      if (col - i >= 0) {
+        availableMovements.push(index - i); // Влево
+      }
+      if (col + i < boardSize) {
+        availableMovements.push(index + i); // Вправо
+      }
+      //по диагонали
+      if (row + i < boardSize && col - i >= 0) {
+        availableMovements.push(index + (boardSize * i - i)); // Вниз-влево
+      }
+      if (row + i < boardSize && col + i < boardSize) {
+        availableMovements.push(index + (boardSize * i + i)); // Вниз-вправо
+      }
+      if (row - i >= 0 && col - i >= 0) {
+        availableMovements.push(index - (boardSize * i + i)); // Вверх-влево
+      }
+      if (row - i >= 0 && col + i < boardSize) {
+        availableMovements.push(index - (boardSize * i - i)); // Вверх-вправо
+      }
+    }
+    return availableMovements;
   }
 }
