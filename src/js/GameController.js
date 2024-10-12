@@ -72,20 +72,38 @@ export default class GameController {
       (element) => element.position === index
     );
 
-    if (!selectedCharacter) {
-      GamePlay.showError("Ячейка пуста!");
-      return;
-    }
+    if (selectedCharacter) {
+      if (this.isPlayerCharacter(index)) {
+        this.positionedCharacters.forEach((element) => {
+          this.gamePlay.deselectCell(element.position);
+        });
+        this.gamePlay.selectCell(index);
+        this.currentCharacter = selectedCharacter;
+      } else if (this.currentCharacter && this.isAttack(index)) {
+        this.attack(index);
+      } else if (!this.isPlayerCharacter(index)) {
+        GamePlay.showError("Выберите своего персонажа");
+      }
 
-    const characterType = selectedCharacter.character.constructor;
-    if (selectedCharacter && this.playerTypes.includes(characterType)) {
-      this.positionedCharacters.forEach((element) => {
-        this.gamePlay.deselectCell(element.position);
-      });
-      this.gamePlay.selectCell(index);
-      this.currentCharacter = selectedCharacter;
-    } else if (this.enemyTypes.includes(characterType)) {
-      GamePlay.showError("Выберите своего персонажа");
+      if (this.getCharacter(index) && this.isPlayerCharacter(index)) {
+        this.gamePlay.cells.forEach((element) =>
+          element.classList.remove("selected-green")
+        );
+        this.gamePlay.cells.forEach((element) =>
+          element.classList.remove("selected-yellow")
+        );
+        this.gamePlay.selectCell(index);
+        this.gameState.selected = index;
+      }
+    } else if (this.currentCharacter && this.isMoving(index)) {
+      this.gamePlay.cells.forEach((element) =>
+        element.classList.remove("selected-green")
+      );
+      this.gamePlay.cells.forEach((element) =>
+        element.classList.remove("selected-yellow")
+      );
+      this.currentCharacter.position = index; // Обновляем позицию текущего персонажа
+      this.gamePlay.redrawPositions(this.positionedCharacters); // Перерисовка персонажей после перемещения
     }
   }
 
@@ -94,6 +112,9 @@ export default class GameController {
     const selectedCharacter = this.positionedCharacters.find((char) => {
       return char.position === index;
     });
+
+    console.log("Current Character", this.currentCharacter);
+    console.log("Selected Character", selectedCharacter);
 
     if (selectedCharacter) {
       // Формируем информацию о персонаже
@@ -110,7 +131,7 @@ export default class GameController {
     ) {
       this.gamePlay.setCursor(cursors.pointer);
       this.gamePlay.selectCell(index, "green");
-    } else if (this.currentCharacter && !this.isUserCharacter(index)) {
+    } else if (this.currentCharacter && !this.isPlayerCharacter(index)) {
       this.gamePlay.setCursor(cursors.notallowed);
     }
 
@@ -118,12 +139,12 @@ export default class GameController {
     if (
       this.currentCharacter &&
       this.getCharacter(index) &&
-      !this.isUserCharacter(index)
+      !this.isPlayerCharacter(index)
     ) {
       if (this.isAttack(index)) {
         this.gamePlay.setCursor(cursors.crosshair);
         this.gamePlay.selectCell(index, "red");
-      } else if (this.currentCharacter && !this.isUserCharacter(index)) {
+      } else if (this.currentCharacter && !this.isPlayerCharacter(index)) {
         this.gamePlay.setCursor(cursors.notallowed);
       }
     }
@@ -179,7 +200,7 @@ export default class GameController {
     );
   }
 
-  isUserCharacter(index) {
+  isPlayerCharacter(index) {
     if (this.getCharacter(index)) {
       const char = this.getCharacter(index).character;
       return this.playerTypes.some((element) => char instanceof element);
@@ -248,5 +269,39 @@ export default class GameController {
       }
     }
     return availableMovements;
+  }
+
+  attack(index) {
+    if (this.gameState.isPlayerTurn) {
+      const attacker = this.currentCharacter.character;
+      const target = this.getCharacter(index).character;
+      const damage = Math.max(
+        attacker.attack - target.defence,
+        attacker.attack * 0.1
+      ); // Расчет урона
+
+      if (!attacker || !target) {
+        console.error("Attacker or target not found");
+        return;
+      }
+
+      this.gamePlay
+        .showDamage(index, damage)
+        .then(() => {
+          target.health -= damage;
+          if (target.health <= 0) {
+            this.getDelete(index);
+            this.enemyTeam.delete(target);
+          }
+        })
+        .then(() => {
+          this.gamePlay.redrawPositions(this.positionedCharacters);
+        });
+      // .then(() => {
+      //   this.getResult();
+      //   this.getEnemyResponse();
+      // });
+      this.gameState.isUsersTurn = false;
+    }
   }
 }
