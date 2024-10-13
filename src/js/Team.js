@@ -28,6 +28,10 @@ export default class Team {
     characters.forEach((character) => this.characters.add(character));
   }
 
+  delete(character) {
+    this.characters.delete(character);
+  }
+
   toArray() {
     return [...this.characters];
   }
