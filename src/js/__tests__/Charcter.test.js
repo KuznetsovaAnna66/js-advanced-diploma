@@ -68,12 +68,14 @@ describe("Character Attributes at Level 1", () => {
   expectedAttributes.forEach(
     ({ type, expectedLevel, expectedAttack, expectedDefence }) => {
       it(`should create a ${type.name} character with correct attributes at level 1`, () => {
-        team.characters.forEach((character) => {
-          if (character instanceof type) {
-            expect(character.level).toBe(expectedLevel);
-            expect(character.attack).toBe(expectedAttack);
-            expect(character.defence).toBe(expectedDefence);
-          }
+        const charactersOfType = team.characters.filter(
+          (character) => character instanceof type
+        );
+        expect(charactersOfType.length).toBeGreaterThan(0);
+        charactersOfType.forEach((character) => {
+          expect(character.level).toBe(expectedLevel);
+          expect(character.attack).toBe(expectedAttack);
+          expect(character.defence).toBe(expectedDefence);
         });
       });
     }

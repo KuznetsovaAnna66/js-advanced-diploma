@@ -1,4 +1,4 @@
-dist/
+distr/
 coverage/
 doc/
 node_modules/

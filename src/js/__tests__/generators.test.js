@@ -39,7 +39,7 @@ describe("generateTeam testing", () => {
     expect([...team.characters].length).toBe(characterCount);
   });
 
-  test("should generate correct number of characters", () => {
+  test("should generate correct level of characters", () => {
     const team = generateTeam(allowedTypes, maxLevel, characterCount);
     expect(
       [...team.characters].every(

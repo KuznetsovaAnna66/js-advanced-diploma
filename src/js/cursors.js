@@ -1,5 +1,3 @@
-import GameController from "./GameController";
-
 const cursors = {
   auto: "auto",
   pointer: "pointer",
